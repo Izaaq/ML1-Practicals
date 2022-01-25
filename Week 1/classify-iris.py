@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
 
 
 #--
@@ -26,35 +27,46 @@ plot_step = 0.02
 iris = load_iris()
 num_features = 4
 
+#--
+# make list for average
+#--
+scores = []
 
 #--
 # classify and plot data
 #--
 plt.figure()
-plt.rc( 'xtick', labelsize=8 )
-plt.rc( 'ytick', labelsize=8 )
-for i in range(0,num_features):
-    for j in range(i+1,num_features):
+plt.rc('xtick', labelsize=8)
+plt.rc('ytick', labelsize=8)
+for i in range(0, num_features):
+    for j in range(i+1, num_features):
         # classify using two corresponding features
         pair = [i, j]
-        X = iris.data[:, pair]
-        y = iris.target
+        X_train, X_test, y_train, y_test = train_test_split(
+            iris.data[:, pair], iris.target, test_size=0.1, random_state=0
+        )
+        # X = iris.data[:, pair]
+        # y = iris.target
         # train classifier
-        clf = DecisionTreeClassifier().fit( X,  y )
+        clf = DecisionTreeClassifier().fit(X_train,  y_train)
         # plot the (learned) decision boundaries
-        plt.subplot( num_features, num_features, j*num_features+i+1 )
-        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid( np.arange(x_min, x_max, plot_step), np.arange(y_min, y_max, plot_step) )
+        plt.subplot(num_features, num_features, j*num_features+i+1)
+        x_min, x_max = X_train[:, 0].min() - 1, X_train[:, 0].max() + 1
+        y_min, y_max = X_train[:, 1].min() - 1, X_train[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step), np.arange(y_min, y_max, plot_step))
         Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
         cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
-        plt.xlabel( iris.feature_names[pair[0]], fontsize=8 )
-        plt.ylabel( iris.feature_names[pair[1]], fontsize=8 )
-        plt.axis( "tight" )
+        plt.xlabel(iris.feature_names[pair[0]], fontsize=8)
+        plt.ylabel(iris.feature_names[pair[1]], fontsize=8)
+        plt.axis("tight")
         # plot the training points
         for ii, color in zip(range(n_classes), plot_colors):
-            idx = np.where(y == ii)
-            plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[ii],cmap=plt.cm.Paired)
+            idx = np.where(y_train == ii)
+            plt.scatter(X_train[idx, 0], X_train[idx, 1], c=color, label=iris.target_names[ii], cmap=plt.cm.Paired)
         plt.axis("tight")
+        # print(clf.score(X_test, y_test))
+        scores.append(clf.score(X_test, y_test))
 plt.show()
+print("Average: ")
+print(sum(scores)/len(scores))
